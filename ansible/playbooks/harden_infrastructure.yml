@@ -1,0 +1,8 @@
+---
+# Playbook: DevSecOps CIS Benchmark Hardening
+- name: Apply CIS Benchmark Hardening and Security Controls
+  hosts: all
+  gather_facts: true
+  roles:
+    - linux_hardening
+    - devsecops_compliance

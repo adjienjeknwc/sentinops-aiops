@@ -1,0 +1,36 @@
+---
+# tasks file for self_healing_remediation (AIOps Triggered)
+- name: Log remediation start in syslog
+  ansible.builtin.command:
+    cmd: "logger -t SENTINOPS-AIOPS 'Auto-Remediation invoked for Incident {{ incident_id | default(\"MANUAL\") }}'"
+
+- name: Inspect and restart degraded systemd service units
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: restarted
+    daemon_reload: yes
+  loop:
+    - sentinops-worker
+    - nginx
+  ignore_errors: yes
+
+- name: Clean defunct zombie processes and free file descriptors
+  ansible.builtin.shell: |
+    # Terminate orphan defunct processes
+    ps -ef | grep '[d]efunct' | awk '{print $3}' | xargs -r kill -9 || true
+  args:
+    executable: /bin/bash
+
+- name: Reclaim kernel buffer caches under extreme memory pressure
+  ansible.builtin.shell: |
+    sync; echo 3 > /proc/sys/vm/drop_caches
+  when: severity | default('HIGH') == 'CRITICAL'
+
+- name: Verify service health post-remediation
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:8000/api/health"
+    status_code: 200
+  register: health_check
+  retries: 3
+  delay: 2
+  ignore_errors: yes

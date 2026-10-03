@@ -1,0 +1,7 @@
+---
+# Playbook: Network Socket Optimization and Routing Failover
+- name: Mitigate Network Socket Storm and Packet Loss
+  hosts: all
+  gather_facts: true
+  roles:
+    - network_diagnostics

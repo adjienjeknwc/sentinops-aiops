@@ -1,0 +1,46 @@
+name: SentinOps DevSecOps & AIOps CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  devsecops-audit-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python Runtime
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov bandit flake8
+
+    - name: Step 1 - SAST Static Security Analysis (Bandit)
+      run: |
+        echo "Running Bandit SAST Scan on Python code..."
+        bandit -r core/ api/ -ll || true
+
+    - name: Step 2 - Execute Comprehensive Test Suite with Coverage
+      run: |
+        pytest tests/ -v --cov=core --cov-report=term-missing
+
+    - name: Step 3 - Ansible Playbook & Syntax Validation
+      run: |
+        pip install ansible ansible-lint || true
+        ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/auto_heal.yml --syntax-check || true
+        ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/harden_infrastructure.yml --syntax-check || true
+
+    - name: Step 4 - Secret Leakage Scan
+      run: |
+        chmod +x scripts/devsecops_audit.sh
+        python3 -c 'from core.devsecops_scanner import DevSecOpsScanner; res = DevSecOpsScanner.run_full_security_audit(); assert res["compliance_percentage"] >= 80'

@@ -1,0 +1,7 @@
+---
+# Playbook: Automated AIOps Self-Healing Remediation
+- name: Execute Autonomous Self-Healing on Degraded Infrastructure
+  hosts: all
+  gather_facts: true
+  roles:
+    - self_healing_remediation

@@ -1,0 +1,28 @@
+---
+# tasks file for network_diagnostics & automated failover
+- name: Optimize Linux TCP socket reuse & time_wait parameters
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop:
+    - { name: 'net.ipv4.tcp_tw_reuse', value: '1' }
+    - { name: 'net.ipv4.tcp_fin_timeout', value: '15' }
+    - { name: 'net.core.somaxconn', value: '4096' }
+    - { name: 'net.ipv4.tcp_max_syn_backlog', value: '8192' }
+
+- name: Flush DNS cache on systemd-resolved
+  ansible.builtin.command:
+    cmd: "resolvectl flush-caches"
+  ignore_errors: yes
+
+- name: Execute low-level socket diagnostic trace
+  ansible.builtin.shell: |
+    ss -s
+    netstat -s | grep -i "drop" || true
+  register: socket_trace
+
+- name: Output socket diagnostic summary
+  ansible.builtin.debug:
+    var: socket_trace.stdout_lines

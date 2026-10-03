@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinOps | Autonomous AIOps & DevSecOps Platform</title>
+    <style>
+        :root {
+            --bg-primary: #0a0d14;
+            --bg-secondary: #121824;
+            --bg-card: #182234;
+            --border-color: #24324d;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --accent-green: #00e676;
+            --accent-red: #ff3366;
+            --accent-yellow: #ffb300;
+            --text-main: #f0f4f8;
+            --text-muted: #8a9bb5;
+            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: linear-gradient(90deg, #0e1422 0%, #151f33 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            color: #000;
+            font-size: 1.2rem;
+        }
+
+        .brand-text h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-text span {
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header-status {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-family: var(--font-mono);
+        }
+
+        .indicator {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background-color: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            grid-gap: 20px;
+            padding: 20px;
+            flex: 1;
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Topology Canvas */
+        #topology-container {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            background: #080b11;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        #topoCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Metric Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .metric-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .metric-val {
+            font-size: 1.3rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--accent-cyan);
+        }
+
+        /* Buttons & Controls */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            border-color: var(--accent-cyan);
+            background: #1e2c44;
+        }
+
+        .btn-danger {
+            background: rgba(255, 51, 102, 0.15);
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .btn-danger:hover {
+            background: var(--accent-red);
+            color: #fff;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: #000;
+            border: none;
+            font-weight: 700;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Terminal Console */
+        .terminal-box {
+            background: #06080d;
+            border: 1px solid #1a2333;
+            border-radius: 8px;
+            padding: 14px;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            line-height: 1.5;
+            color: #4ade80;
+            height: 220px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .terminal-box .err { color: var(--accent-red); }
+        .terminal-box .warn { color: var(--accent-yellow); }
+        .terminal-box .info { color: var(--accent-cyan); }
+
+        /* Incident Card */
+        .incident-card {
+            background: rgba(255, 51, 102, 0.08);
+            border: 1px solid var(--accent-red);
+            border-radius: 8px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .incident-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--accent-red);
+        }
+
+        .badge-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-crit { background: var(--accent-red); color: #fff; }
+        .badge-ok { background: var(--accent-green); color: #000; }
+
+        footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 0.75rem 2rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <div class="brand-logo">S</div>
+            <div class="brand-text">
+                <h1>SentinOps AIOps</h1>
+                <span>Hybrid Cloud Observability & Self-Healing DevSecOps Engine</span>
+            </div>
+        </div>
+        <div class="header-status">
+            <div class="status-badge">
+                <div class="indicator" id="live-indicator"></div>
+                <span id="system-status-text">SYSTEM: OPTIMAL</span>
+            </div>
+            <div class="status-badge">
+                <span>GRAPH NODES: <strong style="color:var(--accent-cyan);" id="node-count">9</strong></span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- LEFT COLUMN: Topology & Live Linux/Network Telemetry -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span>🌐</span> Hybrid-Cloud Dependency Knowledge Graph (Neo4j Topology)
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn" onclick="exportCypher()">Export Neo4j Cypher</button>
+                    </div>
+                </div>
+
+                <div id="topology-container">
+                    <canvas id="topoCanvas"></canvas>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span>⚡</span> Deep Linux OS & Network Telemetry (Kernel & Sockets)
+                    </div>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Auto-refreshing every 2s</span>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">Linux Host CPU</span>
+                        <span class="metric-val" id="metric-cpu">34.2%</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Memory Utilization</span>
+                        <span class="metric-val" id="metric-mem">48.5%</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">TCP Established</span>
+                        <span class="metric-val" id="metric-tcp">54</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">DNS Query Latency</span>
+                        <span class="metric-val" id="metric-dns">12.4 ms</span>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">Zombie Processes</span>
+                        <span class="metric-val" id="metric-zombies" style="color:var(--accent-green);">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Failed Systemd Units</span>
+                        <span class="metric-val" id="metric-systemd" style="color:var(--accent-green);">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Packet Loss</span>
+                        <span class="metric-val" id="metric-loss" style="color:var(--accent-green);">0.0%</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">DevSecOps Compliance</span>
+                        <span class="metric-val" id="metric-sec" style="color:var(--accent-green);">94.0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: AIOps Incident Diagnosis & Ansible Automation -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span>🎯</span> Chaos Engineering & Outage Simulation
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-danger" onclick="injectChaos('MEMORY_LEAK')">💥 Inject Memory Leak</button>
+                    <button class="btn btn-danger" onclick="injectChaos('SOCKET_STORM')">⚡ Inject Socket Storm</button>
+                    <button class="btn btn-danger" onclick="injectChaos('SYSTEMD_CRASH')">💀 Crash Systemd Daemon</button>
+                    <button class="btn" onclick="resetChaos()">🔄 Reset to Healthy</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span>🧠</span> AIOps Root Cause Analysis (RCA) & Blast Radius
+                    </div>
+                    <button class="btn btn-primary" id="btn-remediate" onclick="triggerAutoRemediation()" style="display: none;">
+                        🚀 Auto-Heal (Ansible)
+                    </button>
+                </div>
+
+                <div id="incident-display">
+                    <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.85rem;">
+                        [✓] All 9 hybrid cloud topology vertices operating within nominal baselines. No active anomalies.
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span>📜</span> Autonomous Ansible Playbook Execution Terminal
+                    </div>
+                    <span class="badge-pill badge-ok" id="ansible-status">IDLE</span>
+                </div>
+                <div class="terminal-box" id="terminal-logs">
+[INIT] SentinOps AIOps Orchestrator daemon running.
+[INIT] Multi-tier hybrid topology synced with Graph Engine & NoSQL store.
+[INIT] Ansible Playbook inventory loaded (ansible/inventory/hosts.ini).
+[STANDBY] Awaiting anomaly trigger or scheduled compliance scan...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <span>SentinOps v2.4.0 (Enterprise AIOps, Graph DB, Ansible Automation, DevSecOps)</span>
+        <span>Built for High-Availability Enterprise Infrastructure</span>
+    </footer>
+
+    <script>
+        // Nodes Coordinates for Canvas Visualization
+        const nodes = [
+            { id: "gw-edge-ingress-01", label: "Edge Ingress (Nginx)", x: 80, y: 190, type: "GATEWAY", status: "HEALTHY" },
+            { id: "lb-app-internal", label: "Internal LB", x: 200, y: 190, type: "LOAD_BALANCER", status: "HEALTHY" },
+            { id: "host-linux-app-01", label: "Linux Host 01", x: 340, y: 110, type: "LINUX_HOST", status: "HEALTHY" },
+            { id: "host-linux-app-02", label: "Linux Host 02", x: 340, y: 270, type: "LINUX_HOST", status: "HEALTHY" },
+            { id: "svc-order-processing", label: "Order Microservice", x: 480, y: 110, type: "MICROSERVICE", status: "HEALTHY" },
+            { id: "svc-telemetry-ingest", label: "Telemetry Service", x: 480, y: 270, type: "MICROSERVICE", status: "HEALTHY" },
+            { id: "db-primary-rdbms", label: "PostgreSQL (RDBMS)", x: 620, y: 70, type: "DATABASE_RDBMS", status: "HEALTHY" },
+            { id: "db-nosql-telemetry", label: "MongoDB (NoSQL)", x: 620, y: 190, type: "DATABASE_NOSQL", status: "HEALTHY" },
+            { id: "db-graph-topology", label: "Neo4j (Graph DB)", x: 620, y: 310, type: "DATABASE_GRAPH", status: "HEALTHY" }
+        ];
+
+        const edges = [
+            { from: "gw-edge-ingress-01", to: "lb-app-internal" },
+            { from: "lb-app-internal", to: "host-linux-app-01" },
+            { from: "lb-app-internal", to: "host-linux-app-02" },
+            { from: "svc-order-processing", to: "host-linux-app-01" },
+            { from: "svc-telemetry-ingest", to: "host-linux-app-02" },
+            { from: "svc-order-processing", to: "db-primary-rdbms" },
+            { from: "svc-telemetry-ingest", to: "db-nosql-telemetry" },
+            { from: "svc-telemetry-ingest", to: "db-graph-topology" }
+        ];
+
+        let animationPacketOffset = 0;
+
+        function drawTopology() {
+            const canvas = document.getElementById("topoCanvas");
+            const ctx = canvas.getContext("2d");
+            
+            // Adjust resolution
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const scaleX = canvas.width / 720;
+            const scaleY = canvas.height / 380;
+
+            // Draw Edges
+            edges.forEach(e => {
+                const s = nodes.find(n => n.id === e.from);
+                const t = nodes.find(n => n.id === e.to);
+                if (!s || !t) return;
+
+                ctx.beginPath();
+                ctx.moveTo(s.x * scaleX, s.y * scaleY);
+                ctx.lineTo(t.x * scaleX, t.y * scaleY);
+                ctx.strokeStyle = (s.status === "CRITICAL" || t.status === "CRITICAL") ? "#ff3366" : "#24324d";
+                ctx.lineWidth = (s.status === "CRITICAL" || t.status === "CRITICAL") ? 2.5 : 1.5;
+                ctx.stroke();
+
+                // Draw moving packets
+                const px = s.x * scaleX + (t.x * scaleX - s.x * scaleX) * ((animationPacketOffset % 100) / 100);
+                const py = s.y * scaleY + (t.y * scaleY - s.y * scaleY) * ((animationPacketOffset % 100) / 100);
+                ctx.beginPath();
+                ctx.arc(px, py, 3, 0, 2 * Math.PI);
+                ctx.fillStyle = (s.status === "CRITICAL" || t.status === "CRITICAL") ? "#ff3366" : "#00f2fe";
+                ctx.fill();
+            });
+
+            // Draw Nodes
+            nodes.forEach(n => {
+                const x = n.x * scaleX;
+                const y = n.y * scaleY;
+
+                ctx.beginPath();
+                ctx.arc(x, y, 16, 0, 2 * Math.PI);
+                
+                let color = "#00e676";
+                if (n.status === "CRITICAL") color = "#ff3366";
+                if (n.status === "DEGRADED") color = "#ffb300";
+
+                ctx.fillStyle = color;
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 12;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, 2 * Math.PI);
+                ctx.fillStyle = "#121824";
+                ctx.fill();
+
+                // Label
+                ctx.fillStyle = "#f0f4f8";
+                ctx.font = "10px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(n.label, x, y + 28);
+            });
+
+            animationPacketOffset += 0.8;
+            requestAnimationFrame(drawTopology);
+        }
+
+        async function fetchTelemetry() {
+            try {
+                const res = await fetch("/api/telemetry");
+                const data = await res.json();
+                
+                // Update first linux host metrics for dashboard
+                const host1 = data["host-linux-app-01"];
+                if (host1) {
+                    document.getElementById("metric-cpu").innerText = host1.linux.cpu_utilization_pct + "%";
+                    document.getElementById("metric-mem").innerText = host1.linux.memory_utilization_pct + "%";
+                    document.getElementById("metric-tcp").innerText = host1.network.tcp_connections_established;
+                    document.getElementById("metric-dns").innerText = host1.network.dns_resolution_latency_ms + " ms";
+                    document.getElementById("metric-zombies").innerText = host1.linux.zombie_processes;
+                    document.getElementById("metric-systemd").innerText = host1.linux.systemd_failed_units;
+                    document.getElementById("metric-loss").innerText = host1.network.packet_loss_pct + "%";
+
+                    if (host1.linux.zombie_processes > 0 || host1.linux.memory_utilization_pct > 85) {
+                        document.getElementById("metric-cpu").style.color = "var(--accent-red)";
+                        document.getElementById("metric-mem").style.color = "var(--accent-red)";
+                    } else {
+                        document.getElementById("metric-cpu").style.color = "var(--accent-cyan)";
+                        document.getElementById("metric-mem").style.color = "var(--accent-cyan)";
+                    }
+                }
+            } catch (e) {}
+        }
+
+        async function analyzeIncidents() {
+            try {
+                const res = await fetch("/api/incidents/analyze", { method: "POST" });
+                const inc = await res.json();
+
+                const disp = document.getElementById("incident-display");
+                const remediateBtn = document.getElementById("btn-remediate");
+                const liveInd = document.getElementById("live-indicator");
+                const statText = document.getElementById("system-status-text");
+
+                if (inc && inc.id) {
+                    // Update node status
+                    nodes.forEach(n => {
+                        if (n.id === inc.root_cause_node_id) n.status = "CRITICAL";
+                        else if (inc.affected_nodes.includes(n.id)) n.status = "DEGRADED";
+                    });
+
+                    liveInd.style.backgroundColor = "var(--accent-red)";
+                    liveInd.style.boxShadow = "0 0 10px var(--accent-red)";
+                    statText.innerText = "INCIDENT ACTIVE";
+                    statText.style.color = "var(--accent-red)";
+                    remediateBtn.style.display = "inline-flex";
+
+                    disp.innerHTML = `
+                        <div class="incident-card">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span class="incident-title">${inc.id}: ${inc.title}</span>
+                                <span class="badge-pill badge-crit">SEVERITY: ${inc.severity}</span>
+                            </div>
+                            <div style="font-size:0.8rem; color:#f0f4f8; line-height:1.4;">
+                                <strong>Root Cause Analysis:</strong> ${inc.root_cause_hypothesis}
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; font-size:0.75rem; margin-top:4px;">
+                                <div><strong>Confidence Score:</strong> ${(inc.confidence_score * 100).toFixed(1)}%</div>
+                                <div><strong>Blast Radius Score:</strong> ${inc.blast_radius_score}%</div>
+                                <div><strong>Recommended Playbook:</strong> <code>${inc.recommended_playbook}</code></div>
+                                <div><strong>Affected Nodes:</strong> ${inc.affected_nodes.length} downstream</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    nodes.forEach(n => n.status = "HEALTHY");
+                    liveInd.style.backgroundColor = "var(--accent-green)";
+                    liveInd.style.boxShadow = "0 0 8px var(--accent-green)";
+                    statText.innerText = "SYSTEM: OPTIMAL";
+                    statText.style.color = "var(--text-main)";
+                    remediateBtn.style.display = "none";
+                    disp.innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.85rem;">
+                            [✓] All 9 hybrid cloud topology vertices operating within nominal baselines. No active anomalies.
+                        </div>
+                    `;
+                }
+            } catch (e) {}
+        }
+
+        async function injectChaos(mode) {
+            appendTerminal(`[CHAOS-ENGINE] Injecting simulated failure mode: ${mode} into host-linux-app-01...`, 'warn');
+            await fetch(`/api/chaos/inject?node_id=host-linux-app-01&mode=${mode}`, { method: "POST" });
+            setTimeout(analyzeIncidents, 300);
+        }
+
+        async function resetChaos() {
+            appendTerminal(`[CHAOS-ENGINE] Resetting all infrastructure topology to nominal healthy baseline...`, 'info');
+            await fetch("/api/chaos/reset", { method: "POST" });
+            nodes.forEach(n => n.status = "HEALTHY");
+            setTimeout(analyzeIncidents, 300);
+        }
+
+        async function triggerAutoRemediation() {
+            appendTerminal(`[ORCHESTRATOR] Autonomous Ansible Self-Healing triggered by AIOps Dispatcher...`, 'info');
+            document.getElementById("ansible-status").className = "badge-pill badge-crit";
+            document.getElementById("ansible-status").innerText = "RUNNING";
+
+            const res = await fetch("/api/remediate", { method: "POST" });
+            const resolved = await res.json();
+
+            document.getElementById("ansible-status").className = "badge-pill badge-ok";
+            document.getElementById("ansible-status").innerText = "RESOLVED";
+
+            if (resolved.execution_log) {
+                resolved.execution_log.forEach(log => appendTerminal(log, 'info'));
+            }
+
+            nodes.forEach(n => n.status = "HEALTHY");
+            setTimeout(analyzeIncidents, 1000);
+        }
+
+        async function exportCypher() {
+            const res = await fetch("/api/graph/cypher");
+            const cypher = await res.text();
+            alert("Neo4j Cypher Script exported successfully!\n\n" + cypher.substring(0, 300) + "\n...[Full script in API /api/graph/cypher]");
+        }
+
+        function appendTerminal(msg, type='info') {
+            const term = document.getElementById("terminal-logs");
+            const div = document.createElement("div");
+            div.className = type;
+            div.innerText = msg;
+            term.appendChild(div);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        // Initialize loops
+        drawTopology();
+        setInterval(fetchTelemetry, 2000);
+        setInterval(analyzeIncidents, 2500);
+    </script>
+</body>
+</html>
