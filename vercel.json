@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "name": "sentinops-aiops",
+  "cleanUrls": true,
+  "routes": [
+    {
+      "src": "/api/health",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
